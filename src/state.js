@@ -2,6 +2,13 @@
 
 const noop = function() {};
 
+function append(initialAction, additionalAction) {
+    return function() {
+        initialAction.apply(this, arguments);
+        additionalAction.apply(this, arguments);
+    };
+}
+
 module.exports = class State {
     constructor(id) {
         this.id = id;
@@ -34,27 +41,27 @@ module.exports = class State {
     }
 
     onEnter(callback) {
-        this.onEnterCallback = callback;
+        this.onEnterCallback = append(this.onEnterCallback, callback);
         return this;
     }
 
     onResume(callback) {
-        this.onResumeCallback = callback;
+        this.onResumeCallback = append(this.onResumeCallback, callback);
         return this;
     }
 
     onPause(callback) {
-        this.onPauseCallback = callback;
+        this.onPauseCallback = append(this.onPauseCallback, callback);
         return this;
     }
 
     onExit(callback) {
-        this.onExitCallback = callback;
+        this.onExitCallback = append(this.onExitCallback, callback);
         return this;
     }
 
     onUpdate(callback) {
-        this.onUpdateCallback = callback;
+        this.onUpdateCallback = append(this.onUpdateCallback, callback);
         return this;
     }
 };

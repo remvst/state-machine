@@ -210,4 +210,41 @@ describe('a state machine', () => {
         expect(context.isInState(state1)).toBe(false);
         expect(context.isInState(state2)).toBe(true);
     });
+
+    it('can keep adding callbacks to the same state', () => {
+        const sut = new StateMachine();
+
+        const events = [];
+        const state = mockState(sut, 'state1', events);
+
+        state.onEnter(() => events.push('onEnterBis'));
+        state.onResume(() => events.push('onResumeBis'));
+        state.onUpdate(() => events.push('onUpdateBis'));
+        state.onPause(() => events.push('onPauseBis'));
+        state.onExit(() => events.push('onExitBis'));
+
+        const context = sut.context(state);
+
+        events.splice(0, events.length);
+        expect(events).toEqual([]);
+
+        state.enter(context);
+        state.resume(context);
+        state.update(context);
+        state.pause(context);
+        state.exit(context);
+
+        expect(events).toEqual([
+            'state1.onEnter',
+            'onEnterBis',
+            'state1.onResume',
+            'onResumeBis',
+            'state1.onUpdate',
+            'onUpdateBis',
+            'state1.onPause',
+            'onPauseBis',
+            'state1.onExit',
+            'onExitBis'
+        ]);
+    });
 });

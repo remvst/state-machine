@@ -1,6 +1,6 @@
 {
   "name": "@remvst/state-machine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple state machine implementation",
   "main": "src/state-machine.js",
   "scripts": {
