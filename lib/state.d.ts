@@ -1,4 +1,5 @@
 import Context from './context';
+declare type AnyContextVoid = (context: Context, ..._: any[]) => void;
 declare type ContextVoid = (context: Context) => void;
 export default class State {
     readonly id: string;
@@ -17,6 +18,6 @@ export default class State {
     onResume(callback: ContextVoid): this;
     onPause(callback: ContextVoid): this;
     onExit(callback: ContextVoid): this;
-    onUpdate(callback: ContextVoid): this;
+    onUpdate(callback: AnyContextVoid): this;
 }
 export {};

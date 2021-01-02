@@ -67,7 +67,7 @@ export default class State {
         return this;
     }
 
-    onUpdate(callback: ContextVoid) {
+    onUpdate(callback: AnyContextVoid) {
         this.onUpdateCallback = append(this.onUpdateCallback, callback);
         return this;
     }
