@@ -1,32 +1,38 @@
-'use strict';
+import State from './state';
 
-class ContextStackItem {
+type StateData = Map<string, any>;
 
-    constructor(state, data) {
+export class ContextStackItem {
+
+    readonly state: State;
+    readonly data: Map<string, any>;
+
+    constructor(state: State, data: StateData) {
         this.state = state;
         this.data = data;
     }
-
 }
 
-module.exports = class Context {
+export default class Context {
 
-    constructor(state) {
-        const newItem = new ContextStackItem(state, {});
+    private readonly stack: ContextStackItem[];
+
+    constructor(state: State) {
+        const newItem = new ContextStackItem(state, new Map());
         this.stack = [newItem];
         newItem.state.enter(this);
         newItem.state.resume(this);
     }
 
-    get data() {
+    get data(): StateData {
         if (!this.stack.length) {
-            return {};
+            return new Map();
         }
 
         return this.stack[this.stack.length - 1].data;
     }
 
-    isInState(state) {
+    isInState(state: State) {
         if (!this.stack.length) {
             return false;
         }
@@ -34,23 +40,23 @@ module.exports = class Context {
         return this.stack[this.stack.length - 1].state === state;
     }
 
-    transition(state, data) {
+    transition(state: State, data: StateData = new Map()) {
         const currentItem = this.stack[this.stack.length - 1];
         currentItem.state.pause(this);
         currentItem.state.exit(this);
 
-        const newItem = new ContextStackItem(state, data || {});
+        const newItem = new ContextStackItem(state, data);
         this.stack[this.stack.length - 1] = newItem;
 
         newItem.state.enter(this);
         newItem.state.resume(this);
     }
 
-    interrupt(state, data) {
+    interrupt(state: State, data: StateData = new Map()) {
         const currentItem = this.stack[this.stack.length - 1];
         currentItem.state.pause(this);
 
-        const newItem = new ContextStackItem(state, data || {});
+        const newItem = new ContextStackItem(state, data);
         this.stack.push(newItem);
 
         newItem.state.enter(this);
@@ -69,20 +75,21 @@ module.exports = class Context {
         }
     }
 
-    update(updateParameters) {
+    update(updateParameters: any) {
         const currentItem = this.stack[this.stack.length - 1];
         currentItem.state.update(this, updateParameters);
     }
 
-    reset(state, data = {}) {
+    reset(state: State, data: StateData = new Map()) {
         while (this.stack.length) {
             this.pop();
         }
 
+        this.stack.splice(0, this.stack.length);
+
         const newItem = new ContextStackItem(state, data);
-        this.stack = [newItem];
+        this.stack.push(newItem);
         newItem.state.enter(this);
         newItem.state.resume(this);
     }
-
-};
+}
