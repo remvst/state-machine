@@ -1,9 +1,13 @@
 'use strict';
 
-const StateMachine = require('../src/state-machine');
+import StateMachine from '../src/state-machine';
 
 describe('a state machine', () => {
-    function mockState(stateMachine, label, eventList) {
+    function mockState(
+        stateMachine: StateMachine,
+        label: string,
+        eventList: string[]
+    ) {
         return stateMachine.state(label)
             .onPause(() => eventList.push(label + '.onPause'))
             .onExit(() => eventList.push(label + '.onExit'))
@@ -29,13 +33,13 @@ describe('a state machine', () => {
     it('can update the current state', () => {
         const sut = new StateMachine();
 
-        const events = [];
+        const events: string[] = [];
 
         const state1 = mockState(sut, 'state1', events);
 
         const context = sut.context(state1);
         expect(context.isInState(state1)).toBe(true);
-        expect(context.data).toEqual({});
+        expect(Array.from(context.data.entries())).toEqual([]);
 
         context.update({'some': 'data'});
 
@@ -44,13 +48,13 @@ describe('a state machine', () => {
             'state1.onResume',
             'state1.onUpdate'
         ]);
-        expect(context.data).toEqual({});
+        expect(Array.from(context.data.entries())).toEqual([]);
     });
 
     it('can transition to a new state', () => {
         const sut = new StateMachine();
 
-        const events = [];
+        const events: string[] = [];
 
         const state1 = mockState(sut, 'state1', events);
         const state2 = mockState(sut, 'state2', events);
@@ -69,13 +73,13 @@ describe('a state machine', () => {
             'state2.onEnter',
             'state2.onResume'
         ]);
-        expect(context.data).toEqual({});
+        expect(Array.from(context.data.entries())).toEqual([]);
     });
 
     it('can transition to a new state with data', () => {
         const sut = new StateMachine();
 
-        const events = [];
+        const events: string[] = [];
 
         const state1 = mockState(sut, 'state1', events);
         const state2 = mockState(sut, 'state2', events);
@@ -83,7 +87,7 @@ describe('a state machine', () => {
         const context = sut.context(state1);
         expect(context.isInState(state1)).toBe(true);
 
-        context.transition(state2, {'foo': 'bar'});
+        context.transition(state2, new Map([['foo', 'bar']]));
         expect(context.isInState(state2)).toBe(true);
 
         expect(events).toEqual([
@@ -94,13 +98,13 @@ describe('a state machine', () => {
             'state2.onEnter',
             'state2.onResume'
         ]);
-        expect(context.data).toEqual({'foo': 'bar'});
+        expect(context.data.get('foo')).toEqual('bar');
     });
 
     it('can start a new flow', () => {
         const sut = new StateMachine();
 
-        const events = [];
+        const events: string[] = [];
 
         const state1 = mockState(sut, 'state1', events);
         const state2 = mockState(sut, 'state2', events);
@@ -129,13 +133,13 @@ describe('a state machine', () => {
             'state3.onExit',
             'state1.onResume'
         ]);
-        expect(context.data).toEqual({});
+        expect(Array.from(context.data.entries())).toEqual([]);
     });
 
     it('can start a new flow with data', () => {
         const sut = new StateMachine();
 
-        const events = [];
+        const events: string[] = [];
 
         const state1 = mockState(sut, 'state1', events);
         const state2 = mockState(sut, 'state2', events);
@@ -144,10 +148,10 @@ describe('a state machine', () => {
         const context = sut.context(state1);
         expect(context.isInState(state1)).toBe(true);
 
-        context.interrupt(state2, {'foo': 'bar'});
+        context.interrupt(state2, new Map([['foo', 'bar']]));
         expect(context.isInState(state2)).toBe(true);
 
-        context.transition(state3, {'baz': 'yolo'});
+        context.transition(state3, new Map([['baz', 'yolo']]));
         context.pop();
 
         expect(events).toEqual([
@@ -164,13 +168,13 @@ describe('a state machine', () => {
             'state3.onExit',
             'state1.onResume'
         ]);
-        expect(context.data).toEqual({});
+        expect(Array.from(context.data.entries())).toEqual([]);
     });
 
     it('can pop more than expected without exploding', () => {
         const sut = new StateMachine();
 
-        const events = [];
+        const events: string[] = [];
         const state1 = mockState(sut, 'state1', events);
 
         const context = sut.context(state1);
@@ -183,19 +187,19 @@ describe('a state machine', () => {
             'state1.onExit'
         ]);
 
-        expect(context.data).toEqual({});
+        expect(Array.from(context.data.entries())).toEqual([]);
         expect(context.isInState(state1)).toBe(false);
     });
 
     it('can be reset to a different state', () => {
         const sut = new StateMachine();
 
-        const events = [];
+        const events: string[] = [];
         const state1 = mockState(sut, 'state1', events);
         const state2 = mockState(sut, 'state2', events);
 
         const context = sut.context(state1);
-        context.reset(state2, {'foo': 'bar'});
+        context.reset(state2, new Map([['foo', 'bar']]));
 
         expect(events).toEqual([
             'state1.onEnter',
@@ -206,7 +210,31 @@ describe('a state machine', () => {
             'state2.onResume'
         ]);
 
-        expect(context.data).toEqual({'foo': 'bar'});
+        expect(Array.from(context.data.entries())).toEqual([['foo', 'bar']]);
+        expect(context.isInState(state1)).toBe(false);
+        expect(context.isInState(state2)).toBe(true);
+    });
+
+    it('can be reset to a different state without any payload', () => {
+        const sut = new StateMachine();
+
+        const events: string[] = [];
+        const state1 = mockState(sut, 'state1', events);
+        const state2 = mockState(sut, 'state2', events);
+
+        const context = sut.context(state1);
+        context.reset(state2);
+
+        expect(events).toEqual([
+            'state1.onEnter',
+            'state1.onResume',
+            'state1.onPause',
+            'state1.onExit',
+            'state2.onEnter',
+            'state2.onResume'
+        ]);
+
+        expect(Array.from(context.data.entries())).toEqual([]);
         expect(context.isInState(state1)).toBe(false);
         expect(context.isInState(state2)).toBe(true);
     });
@@ -214,7 +242,7 @@ describe('a state machine', () => {
     it('can keep adding callbacks to the same state', () => {
         const sut = new StateMachine();
 
-        const events = [];
+        const events: string[] = [];
         const state = mockState(sut, 'state1', events);
 
         state.onEnter(() => events.push('onEnterBis'));
